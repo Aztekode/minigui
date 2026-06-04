@@ -1,5 +1,5 @@
 %%% minigui_ffi.erl
-%%% FFI mínimo para abrir/usar un port externo con {packet, 2}.
+%%% Minimal FFI to open/use an external port with {packet, 2}.
 
 -module(minigui_ffi).
 
@@ -71,7 +71,7 @@ ensure_port() ->
   end.
 
 unique_request_id() ->
-  %% Un request_id monotónico, positivo, limitado a 32 bits para el protocolo.
+  %% A monotonic, positive request_id, limited to 32 bits for the protocol.
   (erlang:unique_integer([monotonic, positive]) band 16#FFFFFFFF).
 
 term_to_string(Term) ->

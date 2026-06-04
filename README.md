@@ -1,93 +1,93 @@
 # minigui
 
-`minigui` es una biblioteca experimental para crear interfaces gráficas desde **Gleam (target Erlang)** usando un **port externo en C** (nativo).
+`minigui` is an experimental library for creating graphical user interfaces from **Gleam (Erlang target)** using a native **external C port**.
 
-## Estado / alcance
+## Status / scope
 
-- **Windows**: backend **Win32** (ventana + label + textbox + botón).
-- **Linux**: backend **GTK3** (ventana + label + textbox + botón).
-- **macOS**: por ahora solo **modo headless** (simulado).
+- **Windows**: **Win32** backend (window + label + textbox + button).
+- **Linux**: **GTK3** backend (window + label + textbox + button).
+- **macOS**: for now, **headless mode** only (simulated).
 
-> Nota: en Linux el binario `minigui` enlaza con GTK3, por lo que el sistema debe tener GTK3 disponible en runtime (en desktops es común; en servidores minimalistas puede requerir instalar paquetes).
+> Note: on Linux the `minigui` binary links against GTK3, so the system must have GTK3 available at runtime (common on desktops; on minimal servers you may need to install packages).
 
-El objetivo es mantener una API pequeña y estable en Gleam, y permitir backends nativos por plataforma.
+The goal is to keep a small, stable API in Gleam, while enabling native per-platform backends.
 
-## Releases / publicación
+## Releases / publishing
 
-Ver el checklist: [`RELEASING.md`](./RELEASING.md)
+See the checklist: [`RELEASING.md`](./RELEASING.md)
 
-## Instalación (Gleam Packages)
+## Installation (Gleam Packages)
 
 ```bash
 gleam add minigui
 ```
 
-### “Sin dependencias de build” (binario precompilado)
+### "Build-dependency-free" (precompiled binary)
 
-Para evitar que tus usuarios tengan que instalar un compilador C o headers (`libx11-dev`, etc.), `minigui` está pensado para usar un **ejecutable precompilado** como puente (un *port*) y descargarlo automáticamente a `priv/` en el primer uso.
+To avoid requiring your users to install a C compiler or headers (`libx11-dev`, etc.), `minigui` is designed to use a **precompiled executable** as a bridge (a *port*) and download it automatically into `priv/` on first use.
 
-Por defecto construye la URL así:
+By default it builds the URL like this:
 
 ```
 https://github.com/Aztekode/minigui/releases/download/v<version>/<asset>
 ```
 
-Donde `<version>` sale del `vsn` del paquete (ej. `0.1.0`) y `<asset>` depende del OS/arquitectura, por ejemplo:
+Where `<version>` comes from the package `vsn` (e.g. `0.1.0`) and `<asset>` depends on the OS/architecture, for example:
 
 - `minigui.exe` (Windows x64)
 - `minigui` (Linux x64)
 
-Puedes sobreescribir la base de descargas con:
+You can override the download base with:
 
 ```bash
 MINIGUI_RELEASE_BASE_URL="https://github.com/Aztekode/minigui/releases/download/v0.1.0"
 ```
 
-Si prefieres un enlace exacto tipo `.../minigui.exe`, puedes fijar la URL completa:
+If you prefer an exact link like `.../minigui.exe`, you can set the full URL:
 
 ```bash
 MINIGUI_PORT_URL="https://github.com/Aztekode/minigui/releases/download/v0.1.0/minigui.exe"
 ```
 
-Opciones de seguridad/cache:
+Security/cache options:
 
-- Por defecto, `minigui` **requiere** que exista `minigui(.exe).sha256` y valida el SHA256.
-- `MINIGUI_REQUIRE_SHA=0`: desactiva la validación (no recomendado).
-- El binario se cachea por usuario (Linux: `~/.cache/minigui/<version>/`, Windows: `%LOCALAPPDATA%\\minigui\\<version>\\`).
+- By default, `minigui` **requires** `minigui(.exe).sha256` to exist and validates the SHA256.
+- `MINIGUI_REQUIRE_SHA=0`: disables validation (not recommended).
+- The binary is cached per user (Linux: `~/.cache/minigui/<version>/`, Windows: `%LOCALAPPDATA%\\minigui\\<version>\\`).
 
-> Requisito de runtime: una instalación “completa” de Erlang/OTP que incluya las aplicaciones estándar `inets` + `ssl` (normalmente ya vienen con OTP; en algunas distros Linux pueden venir en paquetes separados).
+> Runtime requirement: a "full" Erlang/OTP installation that includes the standard `inets` + `ssl` applications (they usually ship with OTP; on some Linux distros they may be split into separate packages).
 
 ## Protocolo (v1)
 
-El port se abre con `open_port(..., [{packet, 2}, binary, ...])`.
+The port is opened with `open_port(..., [{packet, 2}, binary, ...])`.
 
 - Handshake:
   - `0x00` `HELLO` + `u16 version`
   - `0xF0` `HELLO_ACK` + `u16 version` + `u32 capabilities`
 
-- Comandos:
-  - `0x10` `CREATE_WINDOW` + `u32 request_id` + título UTF-8
-  - `0x11` `SET_LABEL` + `u32 request_id` + texto UTF-8
-  - `0x12` `SET_TEXT` + `u32 request_id` + texto UTF-8
-  - `0x13` `ADD_BUTTON` + `u32 request_id` + `u8 id` + etiqueta UTF-8
+- Commands:
+  - `0x10` `CREATE_WINDOW` + `u32 request_id` + UTF-8 title
+  - `0x11` `SET_LABEL` + `u32 request_id` + UTF-8 text
+  - `0x12` `SET_TEXT` + `u32 request_id` + UTF-8 text
+  - `0x13` `ADD_BUTTON` + `u32 request_id` + `u8 id` + UTF-8 label
   - `0x14` `RUN` + `u32 request_id`
   - `0x15` `QUIT` + `u32 request_id`
-- Respuestas:
+- Responses:
   - `0x70` `OK` + `u32 request_id`
-  - `0x71` `ERR` + `u32 request_id` + mensaje UTF-8
-- Eventos:
+  - `0x71` `ERR` + `u32 request_id` + UTF-8 message
+- Events:
   - `0x81` `BUTTON_CLICKED` + `u8 id`
   - `0x82` `CLOSED`
-  - `0x83` `LOG` + texto UTF-8
-  - `0x84` `TEXT_CHANGED` + texto UTF-8
+  - `0x83` `LOG` + UTF-8 text
+  - `0x84` `TEXT_CHANGED` + UTF-8 text
   - `0x85` `KEY_DOWN` + `u32 keycode`
-  - `0x86` `ERROR` + texto UTF-8
+  - `0x86` `ERROR` + UTF-8 text
 
-## Compilar (Linux)
+## Build (Linux)
 
-Requisitos: `gcc`, `make`, `pkg-config`, `libgtk-3-dev`, `Erlang/OTP`, `gleam`.
+Requirements: `gcc`, `make`, `pkg-config`, `libgtk-3-dev`, `Erlang/OTP`, `gleam`.
 
-> Probado con **Gleam v1.17.0**.
+> Tested with **Gleam v1.17.0**.
 
 ```bash
 make port
@@ -95,20 +95,20 @@ gleam build
 make demo
 ```
 
-Si estás en un entorno sin servidor X (CI/headless), fuerza el modo simulado:
+If you're in an environment without an X server (CI/headless), force simulated mode:
 
 ```bash
 MINIGUI_HEADLESS=1 make demo
 ```
 
-## Compilar (Windows)
+## Build (Windows)
 
-1. Compila `c_src/minigui_port.c` a `priv/minigui_port.exe` (MSVC o mingw).
-2. Ejecuta el demo:
+1. Compile `c_src/minigui_port.c` to `priv/minigui_port.exe` (MSVC or mingw).
+2. Run the demo:
 
 ```powershell
 gleam build
 gleam run -m demo
 ```
 
-> Nota: el código Win32 está dentro de `#ifdef _WIN32`.
+> Note: the Win32 code is inside `#ifdef _WIN32`.

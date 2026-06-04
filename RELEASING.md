@@ -1,25 +1,25 @@
-# Publicación de minigui (checklist)
+# Releasing minigui (checklist)
 
-Este repositorio publica **dos cosas**:
+This repository publishes **two things**:
 
-1. **Paquete Gleam (Hex / Gleam Packages)**: código Gleam + Erlang helper.
-2. **Assets nativos (GitHub Releases)**: `minigui` (Linux x64) y `minigui.exe` (Windows x64) + `.sha256`.
+1. **Gleam package (Hex / Gleam Packages)**: Gleam code + Erlang helper.
+2. **Native assets (GitHub Releases)**: `minigui` (Linux x64) and `minigui.exe` (Windows x64) + `.sha256`.
 
-La librería descarga el port desde:
+The library downloads the port from:
 
 ```
 https://github.com/Aztekode/minigui/releases/download/v<VERSION>/<asset>
 ```
 
-Por lo tanto, **el tag de git SIEMPRE debe ser `vX.Y.Z`** y la versión del paquete debe ser **`X.Y.Z`**.
+Therefore, **the git tag MUST ALWAYS be `vX.Y.Z`** and the package version must be **`X.Y.Z`**.
 
 ---
 
-## 0) Preparación
+## 0) Preparation
 
-- Asegúrate de que `gleam.toml` tenga la versión final `X.Y.Z`.
-- Actualiza `CHANGELOG.md`.
-- (Opcional) corre el demo en headless:
+- Ensure `gleam.toml` has the final version `X.Y.Z`.
+- Update `CHANGELOG.md`.
+- (Optional) run the headless demo:
 
 ```bash
 make port
@@ -28,9 +28,9 @@ MINIGUI_HEADLESS=1 gleam run -m demo
 
 ---
 
-## 1) Crear tag y release (assets nativos)
+## 1) Create tag and release (native assets)
 
-1. Commit de la versión:
+1. Commit the version:
 
 ```bash
 git add -A
@@ -44,21 +44,20 @@ git tag vX.Y.Z
 git push origin main --tags
 ```
 
-3. GitHub Actions ejecutará el workflow `release.yml` y adjuntará:
+3. GitHub Actions will run the `release.yml` workflow and attach:
    - `minigui` + `minigui.sha256`
    - `minigui.exe` + `minigui.exe.sha256`
 
-> Nota: el workflow falla si el tag `vX.Y.Z` no coincide con la versión `X.Y.Z` en `gleam.toml`.
+> Note: the workflow fails if the `vX.Y.Z` tag does not match the `X.Y.Z` version in `gleam.toml`.
 
 ---
 
-## 2) Publicar el paquete en Hex / Gleam Packages
+## 2) Publish the package to Hex / Gleam Packages
 
-En la máquina donde tengas configuradas credenciales de Hex:
+On the machine where you have Hex credentials configured:
 
 ```bash
 gleam publish
 ```
 
-Si vas a usar CI para publicar, tendrás que configurar el token correspondiente (no se incluye en este repo).
-
+If you are going to use CI to publish, you will need to configure the corresponding token (not included in this repo).

@@ -53,13 +53,13 @@ jobs:
           TAG="${GITHUB_REF_NAME}"
           VERSION="${TAG#v}"
           TOML_VERSION="$(python3 - <<'PY'
-import re
-import pathlib
-txt = pathlib.Path('gleam.toml').read_text(encoding='utf-8')
-m = re.search(r'^version\\s*=\\s*\"([^\"]+)\"\\s*$', txt, re.M)
-print(m.group(1) if m else '')
-PY
-)"
+          import re
+          import pathlib
+          txt = pathlib.Path('gleam.toml').read_text(encoding='utf-8')
+          m = re.search(r'^version\\s*=\\s*\"([^\"]+)\"\\s*$', txt, re.M)
+          print(m.group(1) if m else '')
+          PY
+          )"
           echo "tag=$TAG version=$VERSION gleam.toml=$TOML_VERSION"
           test -n "$TOML_VERSION"
           test "$VERSION" = "$TOML_VERSION"

@@ -1,9 +1,9 @@
 %%% minigui_bootstrap.erl
-%%% Descarga (si hace falta) el ejecutable del port desde GitHub Releases.
+%%% Downloads (if needed) the port executable from GitHub Releases.
 %%%
-%%% Objetivo: que los usuarios puedan usar `gleam add minigui` sin toolchain C,
-%%% y sin instalar headers/libs de desarrollo. El “puente” es un binario
-%%% precompilado por plataforma, descargado a priv/ la primera vez.
+%%% Goal: let users run `gleam add minigui` without a C toolchain and without
+%%% installing development headers/libs. The "bridge" is a precompiled
+%%% per-platform binary, downloaded into priv/ on first use.
 
 -module(minigui_bootstrap).
 
@@ -18,7 +18,7 @@ ensure_port() ->
 
   case filelib:is_file(Path) of
     true ->
-      %% Si ya existe en priv/, validarlo también (política de producción).
+      %% If it already exists in priv/, validate it as well (production policy).
       ok = ensure_http_started(),
       case maybe_verify_sha256(Url, Path) of
         ok -> Path;
@@ -27,8 +27,8 @@ ensure_port() ->
           ensure_port()
       end;
     false ->
-      %% Si estamos ejecutando desde un repo (dev), es común que el binario
-      %% exista en "./priv". Esto evita obligar a descargar durante desarrollo.
+      %% When running from a repo (dev), it's common for the binary to already
+      %% exist in "./priv". This avoids forcing a download during development.
       case local_repo_port() of
         {ok, Local} ->
           Local;
@@ -41,8 +41,8 @@ ensure_port() ->
               ok = maybe_chmod(Path),
               Path;
             {error, Reason} ->
-              %% Si falla la descarga, intentamos un fallback típico de desarrollo:
-              %% priv/minigui_port o priv/minigui_port.exe (si existe)
+              %% If the download fails, try a typical dev fallback:
+              %% priv/minigui_port or priv/minigui_port.exe (if present)
               case fallback_dev_port(PrivDir) of
                 {ok, Fallback} -> Fallback;
                 error -> erlang:error({minigui_port_download_failed, Url, Reason})
@@ -52,18 +52,18 @@ ensure_port() ->
   end.
 
 priv_dir() ->
-  %% Cuando minigui es dependencia, priv_dir/1 apunta al lib en _build.
+  %% When minigui is a dependency, priv_dir/1 points to the lib in _build.
   case code:priv_dir(minigui) of
     {error, _} ->
-      %% fallback para ejecución directa desde el repo
+      %% fallback for direct execution from the repo
       filename:join([filename:dirname(code:which(?MODULE)), "..", "priv"]);
     Dir ->
       Dir
   end.
 
 fallback_dev_port(PrivDir) ->
-  %% Preferimos los nombres de release (minigui/minigui.exe), pero aceptamos
-  %% el nombre histórico minigui_port(/.exe) para desarrollo.
+  %% Prefer release names (minigui/minigui.exe), but accept the historical
+  %% minigui_port(/.exe) name for development.
   Candidates = [
     filename:join(PrivDir, "minigui"),
     filename:join(PrivDir, "minigui.exe"),
@@ -90,7 +90,7 @@ first_existing([Path | Rest]) ->
   end.
 
 ensure_http_started() ->
-  %% inets/httpc vive en OTP; ssl es necesario para https.
+  %% inets/httpc lives in OTP; ssl is required for https.
   _ = application:ensure_all_started(crypto),
   _ = application:ensure_all_started(public_key),
   _ = application:ensure_all_started(ssl),
@@ -101,8 +101,8 @@ ensure_http_started() ->
   end.
 
 cache_dir() ->
-  %% Cache por usuario para no re-descargar por proyecto.
-  %% Linux: $XDG_CACHE_HOME/minigui/<vsn> o ~/.cache/minigui/<vsn>
+  %% Per-user cache to avoid re-downloading per project.
+  %% Linux: $XDG_CACHE_HOME/minigui/<vsn> or ~/.cache/minigui/<vsn>
   %% Windows: %LOCALAPPDATA%\\minigui\\<vsn>
   Vsn = app_vsn(),
   case os:type() of
@@ -127,8 +127,8 @@ cache_dir() ->
   end.
 
 ssl_http_opts(Url) ->
-  %% Por defecto exigimos HTTPS y verificación de certificado.
-  %% Para desarrollo local (http://), permite override:
+  %% By default we require HTTPS and certificate verification.
+  %% For local development (http://), allow an override:
   %%   MINIGUI_ALLOW_INSECURE=1
   case is_http_url(Url) of
     true ->
@@ -138,7 +138,7 @@ ssl_http_opts(Url) ->
         _ -> erlang:error({minigui_insecure_url_not_allowed, Url})
       end;
     false ->
-      %% Intentar ubicar un bundle de CA estándar.
+      %% Try to locate a standard CA bundle.
       Ca =
         case os:getenv("MINIGUI_CACERTFILE") of
           false ->
@@ -167,7 +167,7 @@ maybe_chmod(Path) ->
   end.
 
 release_asset() ->
-  %% Permite forzar una URL exacta, ej:
+  %% Allows forcing an exact URL, e.g.:
   %%   MINIGUI_PORT_URL="https://github.com/Aztekode/minigui/releases/download/0.0.1/minigui.exe"
   case os:getenv("MINIGUI_PORT_URL") of
     false ->
@@ -175,10 +175,10 @@ release_asset() ->
       Base = release_base_url(),
       FileName =
         case Os of
-          %% Para una librería básica, recomendamos assets simples:
+          %% For a basic library, we recommend simple assets:
           %%  - Windows x86_64: minigui.exe
           %%  - Linux x86_64:   minigui
-          %% Si se necesita distinguir por arquitectura, usa MINIGUI_PORT_URL.
+          %% If you need to distinguish by architecture, use MINIGUI_PORT_URL.
           windows when Arch =:= "x86_64" -> "minigui.exe";
           linux when Arch =:= "x86_64" -> "minigui";
           darwin -> "minigui-macos-" ++ Arch;
@@ -200,7 +200,7 @@ detect_platform() ->
     end,
   Arch =
     case erlang:system_info(system_architecture) of
-      %% Ejemplos:
+      %% Examples:
       %% "x86_64-pc-linux-gnu"
       %% "aarch64-unknown-linux-gnu"
       Str when is_list(Str) ->
@@ -227,9 +227,9 @@ normalize_arch(Str) ->
   end.
 
 release_base_url() ->
-  %% Recomendado: publicar los binarios por version, ej:
+  %% Recommended: publish binaries by version, e.g.:
   %% https://github.com/Aztekode/minigui/releases/download/v0.1.0
-  %% Permite override por entorno:
+  %% Allows environment override:
   %%   MINIGUI_RELEASE_BASE_URL="https://.../download/v0.1.0"
   case os:getenv("MINIGUI_RELEASE_BASE_URL") of
     false ->
@@ -241,9 +241,9 @@ release_base_url() ->
   end.
 
 app_vsn() ->
-  %% La version del .app se deriva de gleam.toml.
-  %% Aseguramos que el .app esté cargado para que application:get_key/2 funcione
-  %% incluso si minigui todavía no se ha arrancado.
+  %% The .app version is derived from gleam.toml.
+  %% Ensure the .app is loaded so application:get_key/2 works even if minigui
+  %% hasn't been started yet.
   _ = application:load(minigui),
   case application:get_key(minigui, vsn) of
     {ok, Vsn} when is_list(Vsn) -> Vsn;
@@ -251,7 +251,7 @@ app_vsn() ->
   end.
 
 download_to_file(Url, Path) ->
-  %% Nota: httpc devuelve body como lista si no pedimos binary.
+  %% Note: httpc returns body as a list unless we request binary.
   Req = {Url, []},
   HttpOpts = [{timeout, 30000}] ++ ssl_http_opts(Url),
   Opts = [{body_format, binary}],
@@ -265,13 +265,13 @@ download_to_file(Url, Path) ->
   end.
 
 ensure_cached(Url, CachePath) ->
-  %% Si ya existe en cache y pasa validación (si aplica), ok.
+  %% If it already exists in cache and passes validation (if applicable), ok.
   case filelib:is_file(CachePath) of
     true ->
       case maybe_verify_sha256(Url, CachePath) of
         ok -> ok;
         {error, _} ->
-          %% Cache corrupto: re-descargar
+          %% Corrupt cache: re-download
           file:delete(CachePath),
           download_with_retries(Url, CachePath, 3)
       end;
@@ -300,9 +300,9 @@ download_with_retries(Url, Path, N) ->
   end.
 
 maybe_verify_sha256(Url, Path) ->
-  %% Si existe un `<asset>.sha256`, verificar.
-  %% Política de producción: SHA256 requerido por defecto.
-  %% Puedes desactivarlo solo bajo tu propio riesgo con:
+  %% If a `<asset>.sha256` exists, verify it.
+  %% Production policy: SHA256 required by default.
+  %% You can disable it only at your own risk with:
   %%   MINIGUI_REQUIRE_SHA=0
   Require =
     case os:getenv("MINIGUI_REQUIRE_SHA") of

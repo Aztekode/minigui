@@ -1,11 +1,11 @@
-// minigui_port.c (protocolo v1)
-// Port externo para Erlang/Gleam usando {packet, 2}.
+// minigui_port.c (protocol v1)
+// External port for Erlang/Gleam using {packet, 2}.
 //
 // Handshake:
 //   HELLO      0x00 + u16 version
 //   HELLO_ACK  0xF0 + u16 version + u32 capabilities
 //
-// Comandos (todos incluyen request_id u32 big-endian):
+// Commands (all include request_id u32 big-endian):
 //   CREATE_WINDOW 0x10 + u32 req + title utf-8
 //   SET_LABEL     0x11 + u32 req + text utf-8
 //   SET_TEXT      0x12 + u32 req + text utf-8
@@ -13,11 +13,11 @@
 //   RUN           0x14 + u32 req
 //   QUIT          0x15 + u32 req
 //
-// Respuestas:
+// Responses:
 //   OK            0x70 + u32 req
 //   ERR           0x71 + u32 req + msg utf-8
 //
-// Eventos:
+// Events:
 //   BUTTON_CLICKED 0x81 + u8 id
 //   CLOSED         0x82
 //   LOG            0x83 + msg utf-8
@@ -42,7 +42,7 @@
 
 #define PROTOCOL_VERSION 1
 
-// ---------- salida thread-safe ----------
+// ---------- thread-safe output ----------
 #ifdef _WIN32
 static CRITICAL_SECTION g_out_lock;
 static void out_lock_init(void) { InitializeCriticalSection(&g_out_lock); }
@@ -148,7 +148,7 @@ static void send_key_down(uint32_t keycode) {
   send_packet(buf, (uint16_t)sizeof(buf));
 }
 
-// ---------- lectura ----------
+// ---------- read ----------
 static int read_exact(uint8_t* out, size_t len) {
   size_t got = 0;
   while (got < len) {
@@ -195,7 +195,7 @@ static int is_headless_forced(void) {
   return v && (strcmp(v, "1") == 0 || strcmp(v, "true") == 0 || strcmp(v, "TRUE") == 0);
 }
 
-// ---------- estado compartido ----------
+// ---------- shared state ----------
 typedef struct {
   char* title;
   char* label;
@@ -350,7 +350,7 @@ static void ui_start(gui_state_t* st) {
   if (st->ui_started) return;
   st->ui_started = 1;
   if (is_headless_forced()) {
-    send_log("minigui_port: modo headless (windows).");
+    send_log("minigui_port: headless mode (windows).");
     Sleep(300);
     send_text_changed(st->text ? st->text : "");
     Sleep(300);
@@ -407,7 +407,7 @@ static void* ui_thread_proc(void* param) {
   g_state = (gui_state_t*)param;
 
   if (is_headless_forced()) {
-    send_log("minigui_port: modo headless (linux).");
+    send_log("minigui_port: headless mode (linux).");
     struct timespec ts = {0, 300 * 1000 * 1000};
     nanosleep(&ts, NULL);
     send_text_changed(g_state->text ? g_state->text : "");
@@ -499,7 +499,7 @@ int main(void) {
 
     if (cmd == 0x00) { // HELLO
       if (len < 3) {
-        send_error_event("HELLO inválido");
+        send_error_event("invalid HELLO");
       } else {
         uint16_t ver = read_u16be(buf + 1);
         if (ver != PROTOCOL_VERSION) {
@@ -559,7 +559,7 @@ int main(void) {
       }
       case 0x13: { // ADD_BUTTON
         if (payload_len < 1) {
-          send_err(req, "ADD_BUTTON inválido");
+          send_err(req, "invalid ADD_BUTTON");
           break;
         }
         st.button_id = payload[0];
@@ -586,7 +586,7 @@ int main(void) {
         break;
       }
       default:
-        send_err(req, "comando desconocido");
+        send_err(req, "unknown command");
         break;
     }
 

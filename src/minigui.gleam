@@ -50,7 +50,7 @@ fn port_recv(port: dynamic.Dynamic, timeout_ms: Int) -> RecvResult
 fn unique_request_id() -> Int
 
 pub fn start() -> Result(Handle, StartError) {
-  // Abre el port usando el bootstrap (descarga/usa cache).
+  // Opens the port using the bootstrap (download/use cache).
   case start_ffi() {
     Ok(port) -> {
       let handle = Handle(port: port)
@@ -87,7 +87,7 @@ fn map_start_error(msg: String) -> StartError {
   }
 }
 
-// --- Protocolo v1 -----------------------------------------------------------
+// --- Protocol v1 ------------------------------------------------------------
 const protocol_version: Int = 1
 
 fn mod_u8(n: Int) -> Int {
@@ -113,7 +113,7 @@ fn handshake(handle: Handle) -> Result(Nil, String) {
           }
         }
         _ ->
-          Error("handshake: respuesta inesperada")
+          Error("handshake: unexpected response")
       }
     Error(e) -> Error(e)
   }
@@ -130,16 +130,16 @@ fn wait_for_message(handle: Handle, timeout_ms: Int) -> Result(BitArray, String)
 fn send_cmd_wait_ok(handle: Handle, cmd: Int, payload: String) -> Result(Nil, String) {
   // cmd + request_id(u32).
   let req_id = unique_request_id()
-  // Para evitar problemas de alineación/bitstrings, construimos el mensaje en Erlang.
-  // El payload debe ser un String (binario) para los comandos de texto.
+  // To avoid alignment/bitstring issues, we build the message in Erlang.
+  // Payload must be a String (binary) for text commands.
   port_send_cmd(handle.port, cmd, req_id, payload)
   wait_for_ok(handle, req_id, 5_000)
 }
 
 fn wait_for_ok(handle: Handle, req_id: Int, timeout_ms: Int) -> Result(Nil, String) {
-  // Puede haber eventos intercalados; iteramos hasta OK/ERR.
+  // There may be interleaved events; loop until OK/ERR.
   case port_recv(handle.port, timeout_ms) {
-    Timeout -> Error("timeout esperando OK/ERR")
+    Timeout -> Error("timeout waiting for OK/ERR")
     PortClosed -> Error("port closed")
     Data(msg) ->
       case msg {
@@ -154,20 +154,20 @@ fn wait_for_ok(handle: Handle, req_id: Int, timeout_ms: Int) -> Result(Nil, Stri
             True ->
               case bit_array.to_string(rest) {
                 Ok(text) -> Error(text)
-                Error(_) -> Error("error (utf8 inválido)")
+                Error(_) -> Error("error (invalid utf8)")
               }
             False ->
               wait_for_ok(handle, req_id, timeout_ms)
           }
         }
         _ ->
-          // Ignorar (eventos/logs)
+          // Ignore (events/logs)
           wait_for_ok(handle, req_id, timeout_ms)
       }
   }
 }
 
-// --- API pública ------------------------------------------------------------
+// --- Public API -------------------------------------------------------------
 
 pub fn create_window(handle: Handle, title: String) -> Result(Nil, String) {
   // CREATE_WINDOW = 0x10 + title utf-8
@@ -230,22 +230,22 @@ fn decode_event(msg: BitArray) -> Event {
     <<0x84, rest:bits>> -> {
       case bit_array.to_string(rest) {
         Ok(text) -> TextChanged(text)
-        Error(_) -> PortError("text_changed (utf8 inválido)")
+        Error(_) -> PortError("text_changed (invalid utf8)")
       }
     }
     <<0x85, key:unsigned-int-size(32)>> -> KeyDown(key)
     <<0x83, rest:bits>> -> {
       case bit_array.to_string(rest) {
         Ok(text) -> Log(text)
-        Error(_) -> Log("log (utf8 inválido)")
+        Error(_) -> Log("log (invalid utf8)")
       }
     }
     <<0x86, rest:bits>> -> {
       case bit_array.to_string(rest) {
         Ok(text) -> PortError(text)
-        Error(_) -> PortError("error (utf8 inválido)")
+        Error(_) -> PortError("error (invalid utf8)")
       }
     }
-    _ -> Log("mensaje desconocido")
+    _ -> Log("unknown message")
   }
 }

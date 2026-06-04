@@ -1,7 +1,7 @@
 # Gleam / Erlang build outputs
 build/
 
-# Native port binaries (se generan en CI o con `make port`)
+# Native port binaries (generated in CI or with `make port`)
 priv/minigui
 priv/minigui.exe
 priv/minigui_port
@@ -14,3 +14,4 @@ erl_crash.dump
 .DS_Store
 *.swp
 *.swo
+.vscode/
