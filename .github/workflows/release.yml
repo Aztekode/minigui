@@ -1,0 +1,77 @@
+name: release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  build-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install deps
+        run: sudo apt-get update -y && sudo apt-get install -y build-essential pkg-config libgtk-3-dev
+      - name: Build port
+        run: make port
+      - name: Prepare asset
+        run: |
+          cp -f priv/minigui ./minigui
+          sha256sum ./minigui > ./minigui.sha256
+      - uses: actions/upload-artifact@v4
+        with:
+          name: linux-assets
+          path: |
+            minigui
+            minigui.sha256
+
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build port (MSVC)
+        shell: pwsh
+        run: |
+          cl /O2 /Fe:priv\minigui.exe c_src\minigui_port.c user32.lib gdi32.lib
+          Copy-Item priv\minigui.exe .\minigui.exe -Force
+          (Get-FileHash .\minigui.exe -Algorithm SHA256).Hash.ToLower() + "  minigui.exe" | Out-File -Encoding ascii .\minigui.exe.sha256
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows-assets
+          path: |
+            minigui.exe
+            minigui.exe.sha256
+
+  publish:
+    needs: [build-linux, build-windows]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Check tag matches gleam.toml version
+        run: |
+          TAG="${GITHUB_REF_NAME}"
+          VERSION="${TAG#v}"
+          TOML_VERSION="$(python3 - <<'PY'
+import re
+import pathlib
+txt = pathlib.Path('gleam.toml').read_text(encoding='utf-8')
+m = re.search(r'^version\\s*=\\s*\"([^\"]+)\"\\s*$', txt, re.M)
+print(m.group(1) if m else '')
+PY
+)"
+          echo "tag=$TAG version=$VERSION gleam.toml=$TOML_VERSION"
+          test -n "$TOML_VERSION"
+          test "$VERSION" = "$TOML_VERSION"
+
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/linux-assets/minigui
+            dist/linux-assets/minigui.sha256
+            dist/windows-assets/minigui.exe
+            dist/windows-assets/minigui.exe.sha256

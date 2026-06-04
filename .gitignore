@@ -1,0 +1,14 @@
+# Gleam / Erlang build outputs
+build/
+
+# Native port binaries (se generan en CI o con `make port`)
+priv/minigui
+priv/minigui.exe
+priv/minigui_port
+priv/minigui_port.exe
+
+# OS / tooling
+.DS_Store
+*.swp
+*.swo
+

@@ -1,0 +1,9 @@
+name = "minigui"
+version = "0.1.0"
+description = "Biblioteca GUI básica para Gleam (Win32/GTK) usando un port en C con binarios precompilados."
+licences = ["MIT"]
+repository = { type = "github", user = "Aztekode", repo = "minigui" }
+target = "erlang"
+
+[dependencies]
+gleam_stdlib = "~> 0.45"
