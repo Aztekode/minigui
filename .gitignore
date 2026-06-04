@@ -7,8 +7,10 @@ priv/minigui.exe
 priv/minigui_port
 priv/minigui_port.exe
 
+# Erlang
+erl_crash.dump
+
 # OS / tooling
 .DS_Store
 *.swp
 *.swo
-
