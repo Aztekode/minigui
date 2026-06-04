@@ -29,9 +29,14 @@ jobs:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Setup MSVC dev cmd
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
       - name: Build port (MSVC)
         shell: pwsh
         run: |
+          New-Item -ItemType Directory -Force priv | Out-Null
           cl /O2 /Fe:priv\minigui.exe c_src\minigui_port.c user32.lib gdi32.lib
           Copy-Item priv\minigui.exe .\minigui.exe -Force
           (Get-FileHash .\minigui.exe -Algorithm SHA256).Hash.ToLower() + "  minigui.exe" | Out-File -Encoding ascii .\minigui.exe.sha256
