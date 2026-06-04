@@ -62,7 +62,7 @@ jobs:
           import re
           import pathlib
           txt = pathlib.Path('gleam.toml').read_text(encoding='utf-8')
-          m = re.search(r'^version\\s*=\\s*\"([^\"]+)\"\\s*$', txt, re.M)
+          m = re.search(r'^version\s*=\s*"([^"]+)"\s*$', txt, re.M)
           print(m.group(1) if m else '')
           PY
           )"
