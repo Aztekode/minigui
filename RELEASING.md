@@ -67,6 +67,7 @@ Then push the `vX.Y.Z` tag as usual. The `release.yml` workflow publishes to Hex
 On a machine where you have Hex credentials configured:
 
 ```bash
+gleam export hex-tarball
 gleam publish
 ```
 
@@ -74,3 +75,4 @@ Notes:
 
 - For `0.x.x`, Gleam will ask you to confirm that you are not using semantic versioning.
 - On Windows, publishing can fail if your environment blocks symlinks; CI on Linux avoids this.
+- On WSL, publish from the Linux filesystem (e.g. `~/src/minigui`) instead of `/mnt/c/...` to avoid Windows path/IO edge cases.

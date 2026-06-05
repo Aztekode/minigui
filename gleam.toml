@@ -1,5 +1,5 @@
 name = "minigui"
-version = "0.1.1"
+version = "0.1.2"
 description = "Basic GUI library for Gleam (Win32/GTK) using a C port with precompiled binaries."
 licences = ["MIT"]
 repository = { type = "github", user = "Aztekode", repo = "minigui" }

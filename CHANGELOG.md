@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.1.2
+
+- Re-published to Hex to fix a corrupted `gleam.toml` in the `v0.1.1` tarball.
+
 ## v0.1.1
 
 - Relaxed `gleam_stdlib` constraint to support Gleam stdlib 1.x.

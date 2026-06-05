@@ -40,13 +40,13 @@ Where `<version>` comes from the package `vsn` (e.g. `0.1.0`) and `<asset>` depe
 You can override the download base with:
 
 ```bash
-MINIGUI_RELEASE_BASE_URL="https://github.com/Aztekode/minigui/releases/download/v0.1.1"
+MINIGUI_RELEASE_BASE_URL="https://github.com/Aztekode/minigui/releases/download/v0.1.2"
 ```
 
 If you prefer an exact link like `.../minigui.exe`, you can set the full URL:
 
 ```bash
-MINIGUI_PORT_URL="https://github.com/Aztekode/minigui/releases/download/v0.1.1/minigui.exe"
+MINIGUI_PORT_URL="https://github.com/Aztekode/minigui/releases/download/v0.1.2/minigui.exe"
 ```
 
 Security/cache options:
