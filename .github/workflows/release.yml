@@ -78,10 +78,13 @@ jobs:
           rebar3-version: "3"
 
       - name: Publish to Hex
-        if: ${{ secrets.HEXPM_API_KEY != '' }}
         env:
           HEXPM_API_KEY: ${{ secrets.HEXPM_API_KEY }}
         run: |
+          if [ -z "$HEXPM_API_KEY" ]; then
+            echo "HEXPM_API_KEY is not set; skipping Hex publish."
+            exit 0
+          fi
           printf "I am not using semantic versioning\n" | gleam publish
 
       - uses: actions/download-artifact@v4
