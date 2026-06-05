@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.1.3
+
+- Fixed HTTPS asset downloads on Windows by using OTP's host verification TLS options and SNI.
+- Improved download error reporting to keep the last retry failure reason instead of only `retries_exhausted`.
+
 ## v0.1.2
 
 - Re-published to Hex to fix a corrupted `gleam.toml` in the `v0.1.1` tarball.
