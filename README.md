@@ -22,6 +22,8 @@ See the checklist: [`RELEASING.md`](./RELEASING.md)
 gleam add minigui
 ```
 
+> Note: `0.1.1` and `0.1.2` were retired. Use `>= 0.1.3`.
+
 ### "Build-dependency-free" (precompiled binary)
 
 To avoid requiring your users to install a C compiler or headers (`libx11-dev`, etc.), `minigui` is designed to use a **precompiled executable** as a bridge (a *port*) and download it automatically into `priv/` on first use.
@@ -40,13 +42,13 @@ Where `<version>` comes from the package `vsn` (e.g. `0.1.0`) and `<asset>` depe
 You can override the download base with:
 
 ```bash
-MINIGUI_RELEASE_BASE_URL="https://github.com/Aztekode/minigui/releases/download/v0.1.2"
+MINIGUI_RELEASE_BASE_URL="https://github.com/Aztekode/minigui/releases/download/v0.1.3"
 ```
 
 If you prefer an exact link like `.../minigui.exe`, you can set the full URL:
 
 ```bash
-MINIGUI_PORT_URL="https://github.com/Aztekode/minigui/releases/download/v0.1.2/minigui.exe"
+MINIGUI_PORT_URL="https://github.com/Aztekode/minigui/releases/download/v0.1.3/minigui.exe"
 ```
 
 Security/cache options:

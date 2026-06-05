@@ -93,8 +93,43 @@ jobs:
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
+          body: |
+            Recommended: use minigui >= 0.1.3.
           files: |
             dist/linux-assets/minigui
             dist/linux-assets/minigui.sha256
             dist/windows-assets/minigui.exe
             dist/windows-assets/minigui.exe.sha256
+
+      - name: Smoke test (fresh project)
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          VERSION="${GITHUB_REF_NAME#v}"
+          WORKDIR="$(mktemp -d)"
+          cd "$WORKDIR"
+
+          cat > gleam.toml <<'TOML'
+          name = "minigui_smoke"
+          version = "0.0.0"
+          target = "erlang"
+
+          [dependencies]
+          gleam_stdlib = ">= 1.0.0 and < 2.0.0"
+          TOML
+
+          mkdir -p src
+          cat > src/main.gleam <<'GLEAM'
+          import minigui
+
+          pub fn main() {
+            let Ok(gui) = minigui.start()
+            let Ok(_) = minigui.create_window(gui, "minigui smoke test")
+            let Ok(_) = minigui.quit(gui)
+            Nil
+          }
+          GLEAM
+
+          gleam add minigui@"$VERSION"
+          MINIGUI_HEADLESS=1 gleam run
