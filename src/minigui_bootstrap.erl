@@ -153,17 +153,44 @@ ssl_http_opts(Url) ->
             end;
           V -> V
         end,
-      SslOpts0 = [{verify, verify_peer}],
+      Host = url_host(Url),
+      Base0 = httpc:ssl_verify_host_options(true),
+      Base =
+        case Host of
+          "" -> Base0;
+          _ -> lists:keystore(server_name_indication, 1, Base0, {server_name_indication, Host})
+        end,
       SslOpts =
         case Ca of
-          "" -> SslOpts0;
-          _ -> [{cacertfile, Ca} | SslOpts0]
+          "" ->
+            Base;
+          _ ->
+            %% Replace any existing cacerts entry with cacertfile if provided.
+            [{cacertfile, Ca} | lists:keydelete(cacerts, 1, Base)]
         end,
       [{ssl, SslOpts}]
   end.
 
 is_http_url(Url) when is_list(Url) ->
   lists:prefix("http://", Url).
+
+url_host(Url) when is_list(Url) ->
+  try
+    Parts = uri_string:parse(Url),
+    Host0 = maps:get(host, Parts, ""),
+    normalize_host(Host0)
+  catch
+    _:_ -> ""
+  end.
+
+normalize_host(undefined) ->
+  "";
+normalize_host(Host) when is_binary(Host) ->
+  binary_to_list(Host);
+normalize_host(Host) when is_list(Host) ->
+  Host;
+normalize_host(_) ->
+  "".
 
 maybe_chmod(Path) ->
   case os:type() of
@@ -284,9 +311,12 @@ ensure_cached(Url, CachePath) ->
       download_with_retries(Url, CachePath, 3)
   end.
 
-download_with_retries(_Url, _Path, 0) ->
-  {error, retries_exhausted};
 download_with_retries(Url, Path, N) ->
+  download_with_retries(Url, Path, N, undefined).
+
+download_with_retries(_Url, _Path, 0, LastReason) ->
+  {error, {retries_exhausted, LastReason}};
+download_with_retries(Url, Path, N, _LastReason) ->
   Tmp = Path ++ ".tmp",
   case download_to_file(Url, Tmp) of
     ok ->
@@ -298,10 +328,10 @@ download_with_retries(Url, Path, N) ->
           _ = file:delete(Tmp),
           {error, Reason}
       end;
-    {error, _Reason} ->
+    {error, Reason} ->
       _ = file:delete(Tmp),
       timer:sleep(300),
-      download_with_retries(Url, Path, N - 1)
+      download_with_retries(Url, Path, N - 1, Reason)
   end.
 
 maybe_verify_sha256(Url, Path) ->
