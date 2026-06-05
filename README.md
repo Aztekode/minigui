@@ -40,13 +40,13 @@ Where `<version>` comes from the package `vsn` (e.g. `0.1.0`) and `<asset>` depe
 You can override the download base with:
 
 ```bash
-MINIGUI_RELEASE_BASE_URL="https://github.com/Aztekode/minigui/releases/download/v0.1.0"
+MINIGUI_RELEASE_BASE_URL="https://github.com/Aztekode/minigui/releases/download/v0.1.1"
 ```
 
 If you prefer an exact link like `.../minigui.exe`, you can set the full URL:
 
 ```bash
-MINIGUI_PORT_URL="https://github.com/Aztekode/minigui/releases/download/v0.1.0/minigui.exe"
+MINIGUI_PORT_URL="https://github.com/Aztekode/minigui/releases/download/v0.1.1/minigui.exe"
 ```
 
 Security/cache options:
@@ -103,7 +103,12 @@ MINIGUI_HEADLESS=1 make demo
 
 ## Build (Windows)
 
-1. Compile `c_src/minigui_port.c` to `priv/minigui_port.exe` (MSVC or mingw).
+1. Compile the port:
+
+```bash
+make port
+```
+
 2. Run the demo:
 
 ```powershell

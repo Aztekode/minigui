@@ -21,7 +21,9 @@ ensure_port() ->
       %% If it already exists in priv/, validate it as well (production policy).
       ok = ensure_http_started(),
       case maybe_verify_sha256(Url, Path) of
-        ok -> Path;
+        ok ->
+          ok = maybe_chmod(Path),
+          Path;
         {error, _} ->
           _ = file:delete(Path),
           ensure_port()
@@ -31,6 +33,7 @@ ensure_port() ->
       %% exist in "./priv". This avoids forcing a download during development.
       case local_repo_port() of
         {ok, Local} ->
+          ok = maybe_chmod(Local),
           Local;
         error ->
           ok = ensure_http_started(),
@@ -44,7 +47,9 @@ ensure_port() ->
               %% If the download fails, try a typical dev fallback:
               %% priv/minigui_port or priv/minigui_port.exe (if present)
               case fallback_dev_port(PrivDir) of
-                {ok, Fallback} -> Fallback;
+                {ok, Fallback} ->
+                  ok = maybe_chmod(Fallback),
+                  Fallback;
                 error -> erlang:error({minigui_port_download_failed, Url, Reason})
               end
           end
@@ -64,22 +69,22 @@ priv_dir() ->
 fallback_dev_port(PrivDir) ->
   %% Prefer release names (minigui/minigui.exe), but accept the historical
   %% minigui_port(/.exe) name for development.
-  Candidates = [
-    filename:join(PrivDir, "minigui"),
-    filename:join(PrivDir, "minigui.exe"),
-    filename:join(PrivDir, "minigui_port"),
-    filename:join(PrivDir, "minigui_port.exe")
-  ],
+  Candidates = dev_candidates(PrivDir),
   first_existing(Candidates).
 
 local_repo_port() ->
-  Candidates = [
-    filename:absname(filename:join(["priv", "minigui"])),
-    filename:absname(filename:join(["priv", "minigui.exe"])),
-    filename:absname(filename:join(["priv", "minigui_port"])),
-    filename:absname(filename:join(["priv", "minigui_port.exe"]))
-  ],
+  Candidates = dev_candidates("priv"),
   first_existing(Candidates).
+
+dev_candidates(Dir) ->
+  Names =
+    case os:type() of
+      {win32, _} ->
+        ["minigui.exe", "minigui_port.exe", "minigui", "minigui_port"];
+      _ ->
+        ["minigui", "minigui_port", "minigui.exe", "minigui_port.exe"]
+    end,
+  [filename:absname(filename:join([Dir, Name])) || Name <- Names].
 
 first_existing([]) ->
   error;
@@ -228,9 +233,9 @@ normalize_arch(Str) ->
 
 release_base_url() ->
   %% Recommended: publish binaries by version, e.g.:
-  %% https://github.com/Aztekode/minigui/releases/download/v0.1.0
+  %% https://github.com/Aztekode/minigui/releases/download/v0.1.1
   %% Allows environment override:
-  %%   MINIGUI_RELEASE_BASE_URL="https://.../download/v0.1.0"
+  %%   MINIGUI_RELEASE_BASE_URL="https://.../download/v0.1.1"
   case os:getenv("MINIGUI_RELEASE_BASE_URL") of
     false ->
       DefaultRepo = "https://github.com/Aztekode/minigui/releases/download",

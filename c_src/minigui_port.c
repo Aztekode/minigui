@@ -126,6 +126,14 @@ static void send_closed(void) {
   send_packet(buf, 1);
 }
 
+static void terminate_self(void) {
+#ifdef _WIN32
+  ExitProcess(0);
+#else
+  exit(0);
+#endif
+}
+
 static void send_text_changed(const char* text) {
   size_t n = text ? strlen(text) : 0;
   if (n > 65000) n = 65000;
@@ -299,6 +307,7 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
     case WM_DESTROY:
       send_closed();
       PostQuitMessage(0);
+      terminate_self();
       return 0;
     default:
       break;
@@ -392,6 +401,7 @@ static void on_entry_changed(GtkEditable* _editable, gpointer _data) {
 static void on_destroy(GtkWidget* _w, gpointer _data) {
   send_closed();
   gtk_main_quit();
+  terminate_self();
 }
 
 static gboolean apply_state_idle(gpointer _data) {
