@@ -54,10 +54,23 @@ git push origin main --tags
 
 ## 2) Publish the package to Hex / Gleam Packages
 
-On the machine where you have Hex credentials configured:
+### Option A: Publish from CI (recommended)
+
+Add these GitHub repository secrets:
+
+- `HEXPM_API_KEY`
+
+Then push the `vX.Y.Z` tag as usual. The `release.yml` workflow publishes to Hex from `ubuntu-latest` before creating the GitHub Release.
+
+### Option B: Publish locally
+
+On a machine where you have Hex credentials configured:
 
 ```bash
 gleam publish
 ```
 
-If you are going to use CI to publish, you will need to configure the corresponding token (not included in this repo).
+Notes:
+
+- For `0.x.x`, Gleam will ask you to confirm that you are not using semantic versioning.
+- On Windows, publishing can fail if your environment blocks symlinks; CI on Linux avoids this.
